@@ -3,6 +3,7 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [ "" ]
+
 env:
   ECR_REGISTRY: 123456789.dkr.ecr.us-east-1.amazonaws.com
   APP_NAME: laravel-app
@@ -51,6 +52,7 @@ jobs:
     needs: build-push
     runs-on: ubuntu-latest
     environment: production   # Manual approval enabled
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -74,5 +76,18 @@ jobs:
       - name: Apply Kubernetes Manifests
         run: |
           kubectl apply -f k8s/
-          kubectl rollout status deployment/laravel-api -n production
-          kubectl rollout status deployment/laravel-worker -n production
+
+      - name: Verify rollout (Laravel API)
+        run: |
+          kubectl rollout status deployment/laravel-api -n production --timeout=120s
+
+      - name: Verify rollout (Laravel Worker)
+        run: |
+          kubectl rollout status deployment/laravel-worker -n production --timeout=120s
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed. Rolling back..."
+          kubectl rollout undo deployment/laravel-api -n production
+          kubectl rollout undo deployment/laravel-worker -n production
