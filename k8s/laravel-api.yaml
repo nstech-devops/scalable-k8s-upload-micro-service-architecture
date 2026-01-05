@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: laravel-api
+spec:
+  replicas: 2 #Initial pod Count
+  selector:
+    matchLabels:
+      app: laravel-api
+  template:
+    metadata:
+      labels:
+        app: laravel-api
+    spec:
+      containers:
+        - name: app
+          image: app-registry/laravel-app:latest
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          livenessProbe:
+            tcpSocket:
+              port: 9000
+            initialDelaySeconds: 15
+          volumeMounts:
+            - name: shared-data
+              mountPath: /var/www/storage/app/temp
+      volumes:
+        - name: shared-data
+          persistentVolumeClaim:
+            claimName: shared-uploads-pvc

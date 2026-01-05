@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: laravel-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: laravel-worker
+  template:
+    metadata:
+      labels:
+        app: laravel-worker
+    spec:
+      terminationGracePeriodSeconds: 60 # Prevents data loss during deploy
+      containers:
+        - name: worker
+          image: worker-registry/laravel-app:latest
+          command: ["php", "artisan", "horizon"]
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+          lifecycle:
+            preStop:
+              exec:
+                command: ["php", "artisan", "horizon:terminate"]
+          volumeMounts:
+            - name: shared-data
+              mountPath: /var/www/storage/app/temp
+      volumes:
+        - name: shared-data
+          persistentVolumeClaim:
+            claimName: shared-uploads-pvc

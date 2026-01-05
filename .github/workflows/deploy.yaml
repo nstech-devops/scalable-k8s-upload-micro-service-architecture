@@ -1,0 +1,78 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "" ]
+env:
+  ECR_REGISTRY: 123456789.dkr.ecr.us-east-1.amazonaws.com
+  APP_NAME: laravel-app
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Install Dependencies & Run Tests
+        run: |
+          composer install -q --no-ansi --no-interaction --no-scripts --no-progress
+          php artisan test
+
+  build-push:
+    needs: integration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t $ECR_REGISTRY/$APP_NAME:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$APP_NAME:$IMAGE_TAG
+
+  deploy-production:
+    needs: build-push
+    runs-on: ubuntu-latest
+    environment: production   # Manual approval enabled
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name my-cluster --region us-east-1
+
+      - name: Update Image Tag in Kubernetes Manifests
+        run: |
+          sed -i "s|image: .*laravel-app:.*|image: $ECR_REGISTRY/$APP_NAME:$IMAGE_TAG|g" k8s/laravel-api.yaml
+          sed -i "s|image: .*laravel-app:.*|image: $ECR_REGISTRY/$APP_NAME:$IMAGE_TAG|g" k8s/laravel-worker.yaml
+
+      - name: Apply Kubernetes Manifests
+        run: |
+          kubectl apply -f k8s/
+          kubectl rollout status deployment/laravel-api -n production
+          kubectl rollout status deployment/laravel-worker -n production

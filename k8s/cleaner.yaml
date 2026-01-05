@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: orphan-file-cleaner
+spec:
+  schedule: "0 * * * *" # Every hour
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: cleaner
+            image: busybox
+            command: ["find", "/mnt/data", "-mmin", "+60", "-type", "f", "-delete"]
+            volumeMounts:
+            - name: shared-data
+              mountPath: /mnt/data
+          volumes:
+            - name: shared-data
+              persistentVolumeClaim:
+                claimName: shared-uploads-pvc
+          restartPolicy: OnFailure

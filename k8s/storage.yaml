@@ -1,0 +1,26 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: efs-sc
+provisioner: efs.csi.aws.com
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-XXXXXXXX      # Replace with original EFS FileSystem ID
+  directoryPerms: "750"
+  gidRangeStart: "1000"
+  gidRangeEnd: "2000"
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shared-uploads-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 5Gi   # Logical value (EFS is elastic)
