@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uploads-efs-pvc
+  namespace: uploads
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 5Gi
+
+
+
+
+# # k8s/storage.yaml
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: upload-pvc
+# spec:
+#   accessModes:
+#     - ReadWriteMany  # Critical for multiple pods to access
+#   resources:
+#     requests:
+#       storage: 10Gi
+#   storageClassName: efs-sc # Assuming EFS CSI driver is installed

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: laravel-api
+  namespace: uploads
+spec:
+  selector:
+    app: laravel-api
+  ports:
+    - port: 80
+      targetPort: 80
+  type: LoadBalancer

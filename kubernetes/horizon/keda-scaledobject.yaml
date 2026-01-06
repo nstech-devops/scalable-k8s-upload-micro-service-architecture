@@ -1,0 +1,16 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: horizon-scaledobject
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: horizon-workers
+  minReplicaCount: 1
+  maxReplicaCount: 20
+  triggers:
+      - type: redis
+        metadata:
+          address: redis://upload-service-redis.xxxxxx.use1.cache.amazonaws.com:6379
+          listName: queues:default
+          listLength: "50"

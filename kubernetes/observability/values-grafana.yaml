@@ -1,0 +1,8 @@
+adminPassword: "admin123"
+
+persistence:
+  enabled: true
+  size: 10Gi
+
+service:
+  type: LoadBalancer

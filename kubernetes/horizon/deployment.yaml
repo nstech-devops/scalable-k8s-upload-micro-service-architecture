@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: horizon-workers
+  namespace: uploads
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: horizon-workers
+  template:
+    metadata:
+      labels:
+        app: horizon-workers
+    spec:
+      serviceAccountName: s3-access 
+      containers:
+        - name: worker
+ #         image: yourrepo/laravel-app:latest
+          command: ["php", "artisan", "horizon"]
+          envFrom:
+            - secretRef:
+                name: app-env

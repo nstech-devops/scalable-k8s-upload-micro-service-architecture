@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: laravel-api
+  namespace: uploads
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: laravel-api
+  template:
+    metadata:
+      labels:
+        app: laravel-api
+    spec:
+      serviceAccountName: s3-access 
+      containers:
+        - name: api
+#          image: "your-dockerhub-username/laravel-api:latest"
+          ports:
+            - containerPort: 80
+          envFrom:
+            - secretRef:
+                name: app-env
+          
+
+
+
+
+
+

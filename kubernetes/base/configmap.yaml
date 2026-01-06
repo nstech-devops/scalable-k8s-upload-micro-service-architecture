@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: uploads
+data:
+  S3_TEMP_BUCKET: uploads-temp
+  S3_FINAL_BUCKET: uploads-final
+  REDIS_HOST: <upload-service-redis.xxxxxx.use1.cache.amazonaws.com> (replace with Terraform output)
+  REDIS_PORT: "6379"
+
